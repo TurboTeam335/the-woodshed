@@ -203,7 +203,7 @@ export default function SettingsView(): JSX.Element {
         <div className="bg-surface-800 border border-surface-700 rounded-xl p-5">
           <h3 className="font-semibold text-gray-200 mb-2">Session Generation</h3>
           <div className="space-y-1 text-sm text-gray-500">
-            <p>Model: <span className="text-gray-400 font-mono">claude-3-5-sonnet-20241022</span></p>
+            <p>Model: <span className="text-gray-400 font-mono">claude-sonnet-4-6</span></p>
             <p>~1 API call per session · ~3,000–5,000 tokens per call</p>
             <p className="text-xs text-gray-600 mt-2">
               Approximate cost: &lt;$0.05 per session at current Sonnet pricing.

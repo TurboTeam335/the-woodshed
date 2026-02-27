@@ -39,6 +39,14 @@ export default function NotationDisplay({ notation, title }: NotationDisplayProp
 
     let destroyed = false
 
+    // Fallback timeout — if alphaTab hasn't finished in 12s, show text fallback
+    const timeout = setTimeout(() => {
+      if (!destroyed) {
+        setError('Notation renderer timed out.')
+        setIsLoading(false)
+      }
+    }, 12000)
+
     loadAlphaTab()
       .then((at) => {
         if (destroyed || !containerRef.current) return
@@ -55,10 +63,10 @@ export default function NotationDisplay({ notation, title }: NotationDisplayProp
         }
 
         const settings = new Settings()
-        // Use CDN for fonts and worker — simplest Electron setup
+        // Fonts from CDN; disable web worker to avoid Electron worker-loading issues
         const cdnBase = 'https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/'
         settings.core.fontDirectory = `${cdnBase}font/`
-        settings.core.workerFile = `${cdnBase}alphaTab.worker.js`
+        settings.core.useWorkers = false  // render in main thread — no CDN worker needed
         settings.display.scale = 0.9
         settings.display.layoutMode = 1 // Horizontal
 
@@ -66,8 +74,12 @@ export default function NotationDisplay({ notation, title }: NotationDisplayProp
         apiRef.current = api
 
         api.renderStarted.on(() => setIsLoading(true))
-        api.renderFinished.on(() => setIsLoading(false))
+        api.renderFinished.on(() => {
+          clearTimeout(timeout)
+          setIsLoading(false)
+        })
         api.error.on((e: unknown) => {
+          clearTimeout(timeout)
           const msg = e instanceof Error ? e.message : String(e)
           setError(`Render error: ${msg}`)
           setIsLoading(false)
@@ -77,6 +89,7 @@ export default function NotationDisplay({ notation, title }: NotationDisplayProp
         api.tex(tex, [0])
       })
       .catch((err) => {
+        clearTimeout(timeout)
         if (!destroyed) {
           setError(`Failed to load notation renderer: ${err.message}`)
           setIsLoading(false)
@@ -85,6 +98,7 @@ export default function NotationDisplay({ notation, title }: NotationDisplayProp
 
     return () => {
       destroyed = true
+      clearTimeout(timeout)
       if (apiRef.current) {
         try {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -263,7 +263,7 @@ export function registerIpcHandlers(): void {
       const client = new Anthropic({ apiKey })
       // Minimal API call to verify key
       await client.messages.create({
-        model: 'claude-3-haiku-20240307',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 10,
         messages: [{ role: 'user', content: 'Hi' }]
       })

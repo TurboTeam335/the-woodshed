@@ -145,16 +145,21 @@ ${historySummary}
 Generate a complete 60-minute session. Ensure all durationMinutes across blocks sum to exactly 60. Make it specific, musical, and challenging.`
 
   const response = await client.messages.create({
-    model: 'claude-3-5-sonnet-20241022',
-    max_tokens: 4096,
+    model: 'claude-sonnet-4-6',
+    max_tokens: 16000,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userMessage }]
   })
 
   const text = response.content[0].type === 'text' ? response.content[0].text : ''
 
-  // Parse JSON, stripping any accidental markdown code fences
-  const jsonStr = text.replace(/^```(?:json)?\s*/m, '').replace(/\s*```\s*$/m, '').trim()
+  // Extract JSON by finding the outermost { ... } boundaries
+  const start = text.indexOf('{')
+  const end = text.lastIndexOf('}')
+  if (start === -1 || end === -1 || end <= start) {
+    throw new Error(`No JSON object found in response. Raw response:\n${text.slice(0, 500)}`)
+  }
+  const jsonStr = text.slice(start, end + 1)
   const parsed = JSON.parse(jsonStr) as GeneratedSession
 
   if (!parsed.blocks || !Array.isArray(parsed.blocks)) {
